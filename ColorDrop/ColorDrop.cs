@@ -12,18 +12,18 @@ using BaseX;
 
 namespace ColorDrop
 {
-    public class ColorDrop : NeosMod
-    {
-        public override string Name => "ColorDrop";
-        public override string Author => "art0007i";
-        public override string Version => "1.0.0";
-        public override string Link => "https://github.com/art0007i/ColorDrop/";
-        public override void OnEngineInit()
-        {
-            Harmony harmony = new Harmony("me.art0007i.ColorDrop");
-            harmony.PatchAll();
+	public class ColorDrop : NeosMod
+	{
+		public override string Name => "ColorDrop";
+		public override string Author => "art0007i";
+		public override string Version => "1.1.0";
+		public override string Link => "https://github.com/art0007i/ColorDrop/";
+		public override void OnEngineInit()
+		{
+			Harmony harmony = new Harmony("me.art0007i.ColorDrop");
+			harmony.PatchAll();
 
-        }
+		}
 		[HarmonyPatch(typeof(PrimitiveTryParsers))]
 		[HarmonyPatch("GetParser", typeof(string))]
 		class PrimitiveTryParsers_GetParser_Patch
@@ -40,12 +40,28 @@ namespace ColorDrop
 				return false;
 			};
 
+			private static readonly PrimitiveTryParsers.TryParser ColorXParser = delegate (string str, out object parsed)
+			{
+				colorX cx;
+				if (colorX.TryParse(str, out cx))
+				{
+					parsed = cx;
+					return true;
+				}
+				parsed = null;
+				return false;
+			};
+
 			public static bool Prefix(string typename, ref PrimitiveTryParsers.TryParser __result)
 			{
-				if (typename == "color")
+				switch (typename)
 				{
-					__result = ColorParser;
-					return false;
+					case "color":
+						__result = ColorParser;
+						return false;
+					case "colorX":
+						__result = ColorXParser;
+						return false;
 				}
 				return true;
 			}
