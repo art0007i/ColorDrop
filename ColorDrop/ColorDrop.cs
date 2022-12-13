@@ -22,13 +22,13 @@ namespace ColorDrop
 
         public override void OnEngineInit()
         {
-            Harmony harmony = new Harmony("me.art0007i.ColorDrop");
+            var harmony = new Harmony("me.art0007i.ColorDrop");
             harmony.PatchAll();
 
         }
 
         [HarmonyPatch(typeof(PrimitiveTryParsers), "GetParser", typeof(string))]
-        class PrimitiveTryParsers_GetParser_Patch
+        private static class PrimitiveTryParsers_GetParser_Patch
         {
             private static readonly PrimitiveTryParsers.TryParser ColorParser = delegate (string str, out object parsed)
             {
@@ -54,7 +54,7 @@ namespace ColorDrop
                 return false;
             };
 
-            public static bool Prefix(string typename, ref PrimitiveTryParsers.TryParser __result)
+            private static bool Prefix(string typename, ref PrimitiveTryParsers.TryParser __result)
             {
                 switch (typename)
                 {
@@ -72,50 +72,62 @@ namespace ColorDrop
         }
 
         [HarmonyPatch(typeof(ColorMemberEditor), "BuildUI")]
-        class ColorMemberEditor_BuildUI_Patch
+        private static class ColorMemberEditor_BuildUI_Patch
         {
+            private static readonly MethodInfo openColorPickerMethod = typeof(ColorMemberEditor).GetMethod("OpenColorPicker", AccessTools.allDeclared);
+
             private static bool Prefix(ColorMemberEditor __instance, UIBuilder ui, RelayRef<IField> ____target, Sync<string> ____path, FieldDrive<color> ____colorDrive, FieldDrive<color> ____colorDriveNoAlpha)
             {
-                var openPickerMethod = AccessTools.MethodDelegate<ButtonEventHandler>(__instance.GetType().GetMethod("OpenColorPicker", AccessTools.allDeclared), __instance);
+                var openPickerMethod = AccessTools.MethodDelegate<ButtonEventHandler>(openColorPickerMethod, __instance);
 
                 ui.HorizontalLayout(2f, 0f, null);
+
                 ui.Text("R", true, null, true, null);
                 ui.Style.FlexibleWidth = 10f;
                 ui.PrimitiveMemberEditor(____target.Target, ____path + ".r", true, "0.##");
+
                 ui.Style.FlexibleWidth = -1f;
                 ui.Text("G", true, null, true, null);
                 ui.Style.FlexibleWidth = 10f;
                 ui.PrimitiveMemberEditor(____target.Target, ____path + ".g", true, "0.##");
+
                 ui.Style.FlexibleWidth = -1f;
                 ui.Text("B", true, null, true, null);
                 ui.Style.FlexibleWidth = 10f;
                 ui.PrimitiveMemberEditor(____target.Target, ____path + ".b", true, "0.##");
+
                 ui.Style.FlexibleWidth = -1f;
                 ui.Text("A", true, null, true, null);
                 ui.Style.FlexibleWidth = 10f;
                 ui.PrimitiveMemberEditor(____target.Target, ____path + ".a", true, "0.##");
+
                 ui.Style.FlexibleWidth = -1f;
                 ui.Style.MinWidth = 64f;
                 ui.Panel();
-                Button button = ui.Button(null, openPickerMethod);
+
+                var button = ui.Button(null, openPickerMethod);
                 var text = button.Slot.AttachComponent<Text>();
-                var textField = button.Slot.AttachComponent<TextField>();
-                textField.Text = text;
-                var primEditor = button.Slot.AttachComponent<PrimitiveMemberEditor>();
-                (AccessTools.Field(primEditor.GetType(), "_textEditor").GetValue(primEditor) as SyncRef<TextEditor>).Target = (textField.Editor);
-                (AccessTools.Field(primEditor.GetType(), "_target").GetValue(primEditor) as RelayRef<IField>).Target = ____target.Target;
-                (AccessTools.Field(primEditor.GetType(), "_textDrive").GetValue(primEditor) as FieldDrive<string>).Target = text.Content;
-                textField.Enabled = false;
                 text.Enabled = false;
+
+                var textField = button.Slot.AttachComponent<TextField>();
+                textField.Enabled = false;
+                textField.Text = text;
+
+                var primEditor = Traverse.Create(button.Slot.AttachComponent<PrimitiveMemberEditor>());
+                primEditor.Field<SyncRef<TextEditor>>("_textEditor").Value.Target = textField.Editor;
+                primEditor.Field<RelayRef<IField>>("_target").Value.Target = ____target.Target;
+                primEditor.Field<FieldDrive<string>>("_textDrive").Value.Target = text.Content;
+
                 ui.NestInto(button.Slot);
-                RectTransform rect;
-                RectTransform rect2;
-                ui.SplitHorizontally(0.5f, out rect, out rect2, 0f);
-                ui = new UIBuilder(rect);
+                ui.SplitHorizontally(0.5f, out var left, out var right, 0f);
+
+                ui = new UIBuilder(left);
                 ____colorDriveNoAlpha.ForceLink(ui.Image().Tint);
-                ui = new UIBuilder(rect2);
+
+                ui = new UIBuilder(right);
                 var img = ui.Image(NeosAssets.Common.Backgrounds.TransparentLight64, null);
                 img.PreserveAspect.Value = false;
+
                 ui.Nest();
                 ____colorDrive.ForceLink(ui.Image().Tint);
 
