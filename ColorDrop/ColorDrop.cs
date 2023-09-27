@@ -1,23 +1,23 @@
 ﻿using HarmonyLib;
-using NeosModLoader;
+using ResoniteModLoader;
 using System;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using FrooxEngine;
-using FrooxEngine.LogiX;
 using FrooxEngine.UIX;
-using BaseX;
+using Elements.Core;
 using System.Globalization;
+using System.Reflection.Emit;
 
 namespace ColorDrop
 {
-    public class ColorDrop : NeosMod
+    public class ColorDrop : ResoniteMod
     {
         public override string Name => "ColorDrop";
         public override string Author => "art0007i";
-        public override string Version => "1.2.0";
+        public override string Version => "2.0.0";
         public override string Link => "https://github.com/art0007i/ColorDrop/";
 
         public override void OnEngineInit()
@@ -71,38 +71,55 @@ namespace ColorDrop
             }
         }
 
-        [HarmonyPatch(typeof(ColorMemberEditor), "BuildUI")]
+        [HarmonyPatch(typeof(ColorMemberEditorBase), "BuildUI")]
         private static class ColorMemberEditor_BuildUI_Patch
         {
-            private static readonly MethodInfo openColorPickerMethod = typeof(ColorMemberEditor).GetMethod("OpenColorPicker", AccessTools.allDeclared);
+            private static readonly MethodInfo openColorPickerMethod = typeof(ColorMemberEditorBase).GetMethod("OpenColorPicker", AccessTools.allDeclared);
 
-            private static bool Prefix(ColorMemberEditor __instance, UIBuilder ui, RelayRef<IField> ____target, Sync<string> ____path, FieldDrive<color> ____colorDrive, FieldDrive<color> ____colorDriveNoAlpha)
+            private static bool Prefix(ColorMemberEditorBase __instance, UIBuilder ui, RelayRef<IField> ____target, Sync<string> ____path, FieldDrive<colorX> ____colorDrive, FieldDrive<colorX> ____colorDriveNoAlpha)
             {
                 var openPickerMethod = AccessTools.MethodDelegate<ButtonEventHandler>(openColorPickerMethod, __instance);
 
-                ui.HorizontalLayout(2f, 0f, null);
+                if (__instance.Vertical.Value)
+                {
+                    ui.Style.SupressLayoutElement = true;
+                }
+                ui.HorizontalLayout(2f);
+                if (__instance.Vertical.Value)
+                {
+                    ui.VerticalLayout(2f);
+                }
 
-                ui.Text("R", true, null, true, null);
+                if (__instance.Labels.Value)
+                    ui.Text("R", true, null, true, null);
                 ui.Style.FlexibleWidth = 10f;
                 ui.PrimitiveMemberEditor(____target.Target, ____path + ".r", true, "0.##");
 
                 ui.Style.FlexibleWidth = -1f;
-                ui.Text("G", true, null, true, null);
+                if (__instance.Labels.Value)
+                    ui.Text("G", true, null, true, null);
                 ui.Style.FlexibleWidth = 10f;
                 ui.PrimitiveMemberEditor(____target.Target, ____path + ".g", true, "0.##");
 
                 ui.Style.FlexibleWidth = -1f;
-                ui.Text("B", true, null, true, null);
+                if (__instance.Labels.Value)
+                    ui.Text("B", true, null, true, null);
                 ui.Style.FlexibleWidth = 10f;
                 ui.PrimitiveMemberEditor(____target.Target, ____path + ".b", true, "0.##");
 
                 ui.Style.FlexibleWidth = -1f;
-                ui.Text("A", true, null, true, null);
+                if (__instance.Labels.Value)
+                    ui.Text("A", true, null, true, null);
                 ui.Style.FlexibleWidth = 10f;
                 ui.PrimitiveMemberEditor(____target.Target, ____path + ".a", true, "0.##");
 
                 ui.Style.FlexibleWidth = -1f;
+                if (__instance.Vertical.Value)
+                {
+                    ui.NestOut();
+                }
                 ui.Style.MinWidth = 64f;
+                ui.PushStyle();
                 ui.Panel();
 
                 var button = ui.Button(null, openPickerMethod);
@@ -121,16 +138,16 @@ namespace ColorDrop
                 ui.NestInto(button.Slot);
                 ui.SplitHorizontally(0.5f, out var left, out var right, 0f);
 
-                ui = new UIBuilder(left);
-                ____colorDriveNoAlpha.ForceLink(ui.Image().Tint);
+                var ui2 = new UIBuilder(left);
+                ____colorDriveNoAlpha.ForceLink(ui2.Image().Tint);
 
-                ui = new UIBuilder(right);
-                var img = ui.Image(NeosAssets.Common.Backgrounds.TransparentLight64, null);
+                var ui3 = new UIBuilder(right);
+                var img = ui3.Image(OfficialAssets.Common.Backgrounds.TransparentLight64, null);
                 img.PreserveAspect.Value = false;
-
-                ui.Nest();
-                ____colorDrive.ForceLink(ui.Image().Tint);
-
+                ____colorDrive.ForceLink(ui3.Image().Tint);
+                ui.NestOut();
+                ui.NestOut();
+                ui.NestOut();
                 return false;
             }
         }
