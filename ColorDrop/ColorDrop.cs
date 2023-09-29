@@ -17,11 +17,16 @@ namespace ColorDrop
     {
         public override string Name => "ColorDrop";
         public override string Author => "art0007i";
-        public override string Version => "2.0.0";
+        public override string Version => "2.1.0";
         public override string Link => "https://github.com/art0007i/ColorDrop/";
+
+        [AutoRegisterConfigKey]
+        public static ModConfigurationKey<bool> KEY_ENABLE = new("enabled", computeDefault: () => true);
+        static ModConfiguration config;
 
         public override void OnEngineInit()
         {
+            config = GetConfiguration();
             var harmony = new Harmony("me.art0007i.ColorDrop");
             harmony.PatchAll();
 
@@ -78,16 +83,19 @@ namespace ColorDrop
 
             private static bool Prefix(ColorMemberEditorBase __instance, UIBuilder ui, RelayRef<IField> ____target, Sync<string> ____path, FieldDrive<colorX> ____colorDrive, FieldDrive<colorX> ____colorDriveNoAlpha)
             {
+                if (!config.GetValue(KEY_ENABLE)) return true;
+
                 var openPickerMethod = AccessTools.MethodDelegate<ButtonEventHandler>(openColorPickerMethod, __instance);
 
+                var supress = ui.Style.SupressLayoutElement;
                 if (__instance.Vertical.Value)
-                {
                     ui.Style.SupressLayoutElement = true;
-                }
+                
                 ui.HorizontalLayout(2f);
                 if (__instance.Vertical.Value)
                 {
                     ui.VerticalLayout(2f);
+                    ui.Style.SupressLayoutElement = supress;
                 }
 
                 if (__instance.Labels.Value)
