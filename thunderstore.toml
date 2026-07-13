@@ -1,0 +1,42 @@
+# This file is used by the Thunderstore CLI to build and publish your mod to Thunderstore. https://github.com/thunderstore-io/thunderstore-cli
+
+[config]
+schemaVersion = "0.0.1"
+
+[package]
+namespace = "art0007i"
+name = "ColorDrop"
+description = "Allows you to grab and drop colors in inspectors, similar to how you can grab numbers."
+websiteUrl = "https://github.com/art0007i/ColorDrop"
+containsNsfwContent = false
+
+[package.dependencies] 
+ResoniteModding-BepisLoader = "1.5.1"
+
+[build]
+icon = "./icon.png"
+readme = "./README.md"
+outdir = "./build"
+
+[[build.copy]]
+source = "./Plugin/bin/Release/ColorDrop.dll"
+target = "plugins/ColorDrop/"
+
+[[build.copy]]
+source = "./Plugin/bin/Release/ColorDrop.pdb"
+target = "plugins/ColorDrop/"
+
+[[build.copy]]
+source = "./CHANGELOG.md"
+target = "/"
+
+[[build.copy]]
+source = "./LICENSE"
+target = "/"
+
+[publish]
+repository = "https://thunderstore.io"
+communities = ["resonite"]
+
+[publish.categories]
+resonite = [ "mods" ] # TODO: Change this to your mod's categories, see https://thunderstore.io/api/experimental/community/resonite/category/ for a list of available categories
